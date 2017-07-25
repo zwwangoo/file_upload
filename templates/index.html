@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="{{ static_url('css/stylesheet.css') }}">
+</head>
+<body>
+    <div class="container">
+        <input type="file" name="fileselect" id="fileselect" value="" multiple/>
+        <input type="button" id="btnselect" value="选择上传的文件" />
+        <input type="button" id="btnupload" value="开始上传" />
+    </div>
+    <table cellspacing="0" cellpadding="0" id="filelist">
+        <tr>
+            <td class="filename">文件名</td>
+            <td class="fileprogress">进度</td>
+            <td class="filestatus">状态</td>
+        </tr>
+        <!--<tr><td>人民的名义.avi </td><td><progress value="10" max="100" class="domprogress"></progress><span class="dompercent">10%</span><span class="domsize">0/1.86GB</span></td><td class="filestatus"><span class="domstatus">排队中</span></td></tr>-->
+        <tr id="trmsg">
+            <td colspan="3" id="tdmsg">请选择要上传的文件! 技术支持QQ：1205352402</td>
+        </tr>
+
+    </table>
+</body>
+<script type="text/javascript" src="{{ static_url('js/jquery-2.0.3.min.js') }}"></script>
+<script type="text/javascript" src="{{ static_url('js/spark-md5.js') }}"></script>
+<script type="text/javascript">
+    $("#btnselect").click(function() {
+        $("#fileselect").click();
+    });
+</script>
+</html>
