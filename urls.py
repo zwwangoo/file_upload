@@ -3,9 +3,10 @@
 import tornado.web
 
 from settings import settings
-from views import MainHandler
+from views import MainHandler, UploadJobHandler
 
 application = tornado.web.Application([
-    (r"^/", MainHandler),
+    (r'^/', MainHandler),
+    (r'^/uploadfile$', UploadJobHandler),
 
 ], **settings)

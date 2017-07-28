@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>上传测试页</title>
+    <link rel="stylesheet" href="{{ static_url('css/stylesheet.css') }}">
+</head>
+<body>
+<div class="container">
+    <input type="file" name="fileselect" id="fileselect" value="" multiple/>
+    <input type="button" id="btnselect" value="选择上传的文件" />
+    <input type="button" id="btnupload" value="开始上传" />
+</div>
+<table cellspacing="0" cellpadding="0" id="filelist">
+    <tr>
+        <td class="filename">文件名</td>
+        <td class="fileprogress">进度</td>
+        <td class="filestatus">状态</td>
+    </tr>
+    <!--<tr><td>人民的名义.avi </td><td><progress value="10" max="100" class="domprogress"></progress><span class="dompercent">10%</span><span class="domsize">0/1.86GB</span></td><td class="filestatus"><span class="domstatus">排队中</span></td></tr>-->
+    <tr id="trmsg">
+        <td colspan="3" id="tdmsg">请选择要上传的文件! 技术支持QQ：1205352402</td>
+    </tr>
+</table>
+</body>
+<script type="text/javascript" src="{{ static_url('js/jquery-2.0.3.min.js') }}"></script>
+<script type="text/javascript" src="{{ static_url('js/spark-md5.js') }}"></script>
+<script type="text/javascript">
+    $("#btnselect").click(function() {
+        $("#fileselect").click();
+    });
+    $("#fileselect").change(function() {
+        var files = this.files;
+        if(files.length > 0) {
+            $("#trmsg").remove();
+            $(files).each(function(index, item) {
+                console.log(index, item);
+                var filesize = 0;
+                if((item.size / 1024 / 1024 / 1024) >= 1) {
+                    filesize = (item.size / 1024 / 1024 / 1024).toFixed(2) + "GB"; // b=>kb=>mb=>gb
+                } else if((item.size / 1024 / 1024 / 1024) < 1 && (item.size / 1024 / 1024) >= 1) {
+                    filesize = (item.size / 1024 / 1024).toFixed(2) + "MB";
+                } else if((item.size / 1024 / 1024) < 1 && (item.size / 1024) >= 1) {
+                    filesize = (item.size / 1024).toFixed(2) + "KB";
+                } else {
+                    filesize = item.size + "B";
+                }
+
+                var htmlstr = '<tr><td>' + item.name + '</td><td><progress value="0" max="100" class="domprogress"></progress><span class="dompercent"> 0/'+filesize+'</span><span class="domtime">总共耗时：0 秒</span></td><td class="filestatus"><span class="domstatus">排队中</span></td></tr>';
+                $("#filelist").append(htmlstr);
+
+            });
+        }
+    });
+
+    $("#btnupload").click(function () {
+        var files = $("#fileselect")[0].files;
+        $(files).each(function (index) {
+            yyupload(files[index], $("span.domstatus").eq(index), $("span.dompercent").eq(index), $(".domprogress").eq(index), $("span.domtime").eq(index));
+        });
+    });
+    function yyupload(file, dommsg, dompercentmb, domprogress, domtime, fn) {
+        upload(file);
+    }
+
+    function upload(file) {
+        var k = 0;
+        var fd = new FormData();
+        fd.append("file", file);
+        fd.append("filename", file.name);
+        fd.append("filesize", file.size);
+        fd.append("enctype", "multipart/form-data");
+
+        var xhr = new XMLHttpRequest();
+        xhr.open("post", "/uploadfile", true);
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState === 4 && xhr.status === 200){
+                console.log("上传成功");
+                k = 0;
+            }else if (xhr.status === 500){
+                setTimeout(function () {
+                    if(k < 3){
+                        console.log("sendfinish");
+                    }
+                    k++;
+                }, 3000);
+            }
+        };
+        xhr.send(fd);
+    }
+</script>
+</html>
