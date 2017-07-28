@@ -69,7 +69,6 @@
         fd.append("file", file);
         fd.append("filename", file.name);
         fd.append("filesize", file.size);
-        fd.append("enctype", "multipart/form-data");
 
         var xhr = new XMLHttpRequest();
         xhr.open("post", "/uploadfile", true);

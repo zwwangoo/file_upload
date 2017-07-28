@@ -38,12 +38,12 @@ class UploadJobHandler(tornado.web.RequestHandler):
         if len(file_metas) <= 0:
             self.write("获取服务器上传文件失败！")
 
-        for metas in file_metas:
-            filename = self.get_argument("filename")
-            tempfilename = filename + ".part"
-            newname = os.path.join(BASE_DIR, "file_upload/static/upload/" + tempfilename)
-            with open(newname, "wb+") as f:
-                f.write(metas["body"])
+        metas = file_metas[0]
+        filename = self.get_argument("filename")
+        tempfilename = filename + ".part"
+        newname = os.path.join(BASE_DIR, "file_upload/static/upload/" + tempfilename)
+        with open(newname, "wb+") as f:
+            f.write(metas["body"])
         self.write("finished!")
 
     def get(self, *args, **kwargs):
