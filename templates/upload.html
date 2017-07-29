@@ -59,33 +59,118 @@
             yyupload(files[index], $("span.domstatus").eq(index), $("span.dompercent").eq(index), $(".domprogress").eq(index), $("span.domtime").eq(index));
         });
     });
+
     function yyupload(file, dommsg, dompercentmb, domprogress, domtime, fn) {
-        upload(file);
-    }
+        var startTime = new Date();
+        calculate(file);
+        // 获取文件加密字符串
+        function calculate(file) {
 
-    function upload(file) {
-        var k = 0;
-        var fd = new FormData();
-        fd.append("file", file);
-        fd.append("filename", file.name);
-        fd.append("filesize", file.size);
+            var fileReader = new FileReader();
+            var chunkSize = 1024 * 1024 * 5;  // 每次读取5M
+            var chunkCount = Math.ceil(file.size / chunkSize);  // 向上取整
+            var currentChunk = 0;  // 当前索引块
+            var spart = new SparkMD5();
 
-        var xhr = new XMLHttpRequest();
-        xhr.open("post", "/uploadfile", true);
-        xhr.onreadystatechange = function () {
-            if (xhr.readyState === 4 && xhr.status === 200){
-                console.log("上传成功");
-                k = 0;
-            }else if (xhr.status === 500){
-                setTimeout(function () {
-                    if(k < 3){
-                        console.log("sendfinish");
-                    }
-                    k++;
-                }, 3000);
+            loadNext();
+
+            fileReader.onload = function (e) {
+                dommsg.text("正在检查文件：" + (currentChunk + 1) + "/" + chunkCount);
+                spart.appendBinary(e.target.result);
+                currentChunk++;
+                if(currentChunk < chunkCount){
+                    loadNext();
+                }else {
+                    var md5value = spart.end();
+                    console.log("文件加密结束，密钥为：" + md5value);
+                    checkfile(md5value, file)
+                }
+            };
+
+            function loadNext() {
+                var start = currentChunk * chunkSize;
+                var end = start + chunkSize >= file.size ? file.size : start + chunkSize;
+                fileReader.readAsBinaryString(file.slice(start, end))
             }
-        };
-        xhr.send(fd);
+        }
+
+        function checkfile(md5value, file){
+            var fd = new FormData();
+            fd.append("filename", file.name);
+            fd.append("md5value", md5value);
+            var xhr = new XMLHttpRequest();
+            xhr.open("post", "/checkfile", true);
+            
+            xhr.onreadystatechange = function (res) {
+                if(xhr.readyState === 4 && xhr.status === 200){
+                    var jsonbj = JSON.parse(xhr.responseText);
+
+                    switch (jsonbj.flag){
+                        case 0: upload(file, md5value); break;
+                        case 1: secondUpload(file); break;
+                        case 2: secondUpload(file); break;
+                    }
+                    repeatcount = 0;
+                } else if(xhr.status === 500) {
+                    setTimeout(function() {
+                        if(repeatcount < 3) {
+                            checkfile(md5value, file);
+                        }
+                        repeatcount++;
+                    }, 3000);
+                }
+            };
+            xhr.send(fd);
+        }
+
+        //实现秒传功能
+        function secondUpload(file)
+        {
+            var timerange = (new Date().getTime() - startTime.getTime()) / 1000;
+            domtime.text("耗时" + timerange + "秒");
+            //显示结果进度
+            var percent =100;
+            dommsg.text(percent.toFixed(2) + "%");
+            domprogress.val(percent);
+            var total = file.size;
+            if (total > 1024 * 1024 * 1024) {
+                dompercentmb.text((total / 1024 / 1024 / 1024).toFixed(2) + "GB/" + (total / 1024 / 1024 / 1024).toFixed(2) + "GB");
+            } else if (total > 1024 * 1024) {
+                dompercentmb.text((total / 1024 / 1024).toFixed(2) + "MB/" + (total / 1024 / 1024).toFixed(2) + "MB");
+            } else if (total > 1024 && total < 1024 * 1024) {
+                dompercentmb.text((total / 1024).toFixed(2) + "KB/" + (total / 1024).toFixed(2) + "KB");
+            } else {
+                dompercentmb.text((total).toFixed(2) + "B/" + (total).toFixed(2) + "B");
+            }
+
+        }
+
+        function upload(file, md5value) {
+            var k = 0;
+            var fd = new FormData();
+            fd.append("file", file);
+            fd.append("md5value", md5value);
+            fd.append("filename", file.name);
+            fd.append("filesize", file.size);
+
+            var xhr = new XMLHttpRequest();
+            xhr.open("post", "/uploadfile", true);
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState === 4 && xhr.status === 200){
+                    console.log("上传成功");
+                    secondUpload(file);
+                    k = 0;
+                }else if (xhr.status === 500){
+                    setTimeout(function () {
+                        if(k < 3){
+                            console.log("sendfinish");
+                        }
+                        k++;
+                    }, 3000);
+                }
+            };
+            xhr.send(fd);
+        }
     }
 </script>
 </html>

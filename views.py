@@ -18,7 +18,7 @@ class CheckFileHandler(tornado.web.RequestHandler):
         path_part = os.path.join(BASE_DIR, "file_upload/static/upload/" + md5value + ".part")
         path_ok = os.path.join(BASE_DIR, "file_upload/static/upload/" + md5value + ".ok")
 
-        if os.path.isfile(path_ok):
+        if os.path.isfile(path_ok):  # 文件上传结束
             flag = 2
             ret = {"flag": flag}
         elif os.path.isfile(path_part):
@@ -39,9 +39,10 @@ class UploadJobHandler(tornado.web.RequestHandler):
             self.write("获取服务器上传文件失败！")
 
         metas = file_metas[0]
-        filename = self.get_argument("filename")
-        tempfilename = filename + ".part"
+        md5value = self.get_argument("md5value")
+        tempfilename = md5value + ".part"
         newname = os.path.join(BASE_DIR, "file_upload/static/upload/" + tempfilename)
+
         with open(newname, "wb+") as f:
             f.write(metas["body"])
         self.write("finished!")
