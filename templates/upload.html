@@ -106,8 +106,8 @@
                     var jsonbj = JSON.parse(xhr.responseText);
 
                     switch (jsonbj.flag){
-                        case 0: upload(file, md5value); break;
-                        case 1: secondUpload(file); break;
+                        case 0: doUpload(file, md5value); break;
+                        case 1: doUpload(file, md5value); break;
                         case 2: secondUpload(file); break;
                     }
                     repeatcount = 0;
@@ -145,31 +145,112 @@
 
         }
 
-        function upload(file, md5value) {
-            var k = 0;
-            var fd = new FormData();
-            fd.append("file", file);
-            fd.append("md5value", md5value);
-            fd.append("filename", file.name);
-            fd.append("filesize", file.size);
+        function doUpload(file, md5value) {
+            var startindex = 0;
+            var reader = new FileReader();
+            var step = 1024 * 200;  // 每次读取200KB
+            var cuLoaded = startindex;
+            var total = file.size;
 
-            var xhr = new XMLHttpRequest();
-            xhr.open("post", "/uploadfile", true);
-            xhr.onreadystatechange = function () {
-                if (xhr.readyState === 4 && xhr.status === 200){
-                    console.log("上传成功");
-                    secondUpload(file);
-                    k = 0;
-                }else if (xhr.status === 500){
-                    setTimeout(function () {
-                        if(k < 3){
-                            console.log("sendfinish");
-                        }
-                        k++;
-                    }, 3000);
-                }
+            reader.onload = function (e) {
+                var result = reader.result;
+                var loaded = e.loaded;
+                uploadFile(result, cuLoaded, function () {
+                    cuLoaded += loaded;
+                    var timerange = (new Date().getTime() - startTime.getTime()) / 1000;
+
+                    if (total > 1024 * 1024 * 1024) {
+                        dompercentmb.text((cuLoaded / 1024 / 1024 / 1024).toFixed(2) + "GB/" + (total / 1024 / 1024 / 1024).toFixed(2) + "GB");
+                    } else if (total > 1024 * 1024) {
+                        dompercentmb.text((cuLoaded / 1024 / 1024).toFixed(2) + "MB/" + (total / 1024 / 1024).toFixed(2) + "MB");
+                    } else if (total > 1024 && total < 1024 * 1024) {
+                        dompercentmb.text((cuLoaded / 1024).toFixed(2) + "KB/" + (total / 1024).toFixed(2) + "KB");
+                    } else {
+                        dompercentmb.text((cuLoaded).toFixed(2) + "B/" + (total).toFixed(2) + "B");
+                    }
+                    domtime.text("耗时" + timerange + "秒");
+                    domtime.text("耗时" + timerange + "秒");
+                    if (cuLoaded < total) {
+                        readBlob(cuLoaded);
+                    } else {
+                        console.log('总共用时：' + timerange);
+                        cuLoaded = total;
+                        sendfinish(); //告知服务器上传完毕
+                        domtime.text("上传完成,总共耗时" + timerange + "秒");
+                    }
+                    //显示结果进度
+                    var percent = (cuLoaded / total) * 100;
+                    dommsg.text(percent.toFixed(2) + "%");
+                    domprogress.val(percent);
+                });
             };
-            xhr.send(fd);
+            readBlob(cuLoaded);
+            //指定开始位置，分块读取文件
+            function readBlob(start) {
+                //指定开始位置和结束位置读取文件
+                var blob = file.slice(start, start + step); //读取开始位置和结束位置的文件
+                reader.readAsArrayBuffer(blob); //读取切割好的文件块
+            }
+            //继续
+            function containue() {
+                readBlob(cuLoaded);
+            }
+
+            var k = 0;
+            function sendfinish() {
+                var fd = new FormData();
+                fd.append("filename", file.name);
+                fd.append("md5value", md5value);
+                fd.append("totalsize", file.size);
+
+                var xhr = new XMLHttpRequest();
+                xhr.open("post", "/finishupload", true);
+                xhr.onreadystatechange = function () {
+                    if (xhr.readyState === 4 && xhr.status === 200){
+                        if(fn){
+                            fn();
+                        }
+                        k = 0;
+                    }else if (xhr.status === 500){
+                        setTimeout(function () {
+                            if(k<3){
+                                sendfinish();
+                            }
+                            k++;
+                        }, 300);
+                    }
+                };
+                xhr.send(fd);
+            }
+
+            var m = 0;
+            function uploadFile(result, startIndex, onSuccess) {
+                var blob = new Blob([result]);
+                var fd = new FormData();
+                fd.append("file", blob);
+                fd.append("md5value", md5value);
+                fd.append("filename", file.name);
+                fd.append("filesize", file.size);
+                fd.append("loaded", startIndex);
+
+                var xhr = new XMLHttpRequest();
+                xhr.open("post", "/uploadfile", true);
+                xhr.onreadystatechange = function () {
+                    if (xhr.readyState === 4 && xhr.status === 200){
+                        m = 0;
+                        if(onSuccess) onSuccess();
+                    }else if (xhr.status === 500){
+                        setTimeout(function () {
+                            if(m < 3){
+                                console.log("sendfinish");
+                            }
+                            m++;
+                        }, 1000);
+                    }
+                };
+                xhr.send(fd);
+            }
+
         }
     }
 </script>
