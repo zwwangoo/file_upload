@@ -43,7 +43,7 @@ class UploadJobHandler(tornado.web.RequestHandler):
         tempfilename = md5value + ".part"
         newname = os.path.join(BASE_DIR, "file_upload/static/upload/" + tempfilename)
 
-        with open(newname, "a") as f:
+        with open(newname, "ab") as f:  # 以二机制方式追加
             f.write(metas["body"])
         self.write("finished!")
 
@@ -57,6 +57,7 @@ class FinishUpload(tornado.web.RequestHandler):
         md5value = self.get_argument("md5value")
         filename = self.get_argument("filename")
         totalsize = self.get_argument("totalsize")
+        print totalsize
 
         path_part = os.path.join(BASE_DIR, "file_upload/static/upload/" + md5value + ".part")
         path_ok = os.path.join(BASE_DIR, "file_upload/static/upload/" + md5value + ".ok")

@@ -188,7 +188,8 @@
             //指定开始位置，分块读取文件
             function readBlob(start) {
                 //指定开始位置和结束位置读取文件
-                var blob = file.slice(start, start + step); //读取开始位置和结束位置的文件
+                var end = start + step >= file.size ? file.size : start + step;
+                var blob = file.slice(start, end); //读取开始位置和结束位置的文件
                 reader.readAsArrayBuffer(blob); //读取切割好的文件块
             }
             //继续
