@@ -23,7 +23,8 @@ class CheckFileHandler(tornado.web.RequestHandler):
             ret = {"flag": flag}
         elif os.path.isfile(path_part):
             flag = 1
-            ret = {"flag": flag, "startindex": 1}
+            startindex = os.path.getsize(path_part)
+            ret = {"flag": flag, "startindex": startindex}
         else:
             flag = 0
             ret = {"flag": flag, "startindex": 0}

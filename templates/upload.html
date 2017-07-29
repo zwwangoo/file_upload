@@ -67,7 +67,7 @@
         function calculate(file) {
 
             var fileReader = new FileReader();
-            var chunkSize = 1024 * 1024 * 5;  // 每次读取5M
+            var chunkSize = 1024 * 1024 * 7;  // 每次读取5M
             var chunkCount = Math.ceil(file.size / chunkSize);  // 向上取整
             var currentChunk = 0;  // 当前索引块
             var spart = new SparkMD5();
@@ -107,7 +107,7 @@
 
                     switch (jsonbj.flag){
                         case 0: doUpload(file, md5value); break;
-                        case 1: doUpload(file, md5value); break;
+                        case 1: doUpload(file, md5value, jsonbj.startindex); break;
                         case 2: secondUpload(file); break;
                     }
                     repeatcount = 0;
@@ -145,10 +145,9 @@
 
         }
 
-        function doUpload(file, md5value) {
-            var startindex = 0;
+        function doUpload(file, md5value, startindex=0) {
             var reader = new FileReader();
-            var step = 1024 * 200;  // 每次读取200KB
+            var step = 1024 * 400;  // 每次读取400KB
             var cuLoaded = startindex;
             var total = file.size;
 
